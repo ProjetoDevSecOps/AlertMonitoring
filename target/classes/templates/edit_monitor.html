@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{base}">
+<head>
+    <title>Editar Monitor</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <link rel="stylesheet" th:href="@{/css/edit_monitor.css}">
+    <div class="card bg-dark p-4 mx-auto text-light">
+        <h1 class="text-center">Editar Monitoramento</h1>
+        <form method="POST" th:action="@{/monitor/edit/{id}(id=${monitor.id})}" th:object="${monitor}">
+            <input type="hidden" th:field="*{id}" />
+            <div class="form-group">
+                <label for="type">Tipo:</label>
+                <select class="form-control bg-secondary text-light" id="type" onchange="toggleFields()" required th:field="*{type}">
+                    <option value="url">URL</option>
+                    <option value="telnet">Telnet</option>
+                </select>
+            </div>
+
+            <div id="urlField" class="form-group">
+                <label for="address">Endereço (URL):</label>
+                <input type="text" class="form-control bg-secondary text-light" id="address" required th:field="*{address}">
+            </div>
+
+            <div id="telnetFields" class="form-group">
+                <div class="form-group">
+                    <label for="hostname">Hostname:</label>
+                    <input type="text" class="form-control bg-secondary text-light" id="hostname" th:field="*{address}">
+                </div>
+                <div class="form-group">
+                    <label for="port">Porta:</label>
+                    <input type="number" class="form-control bg-secondary text-light" id="port" th:field="*{port}">
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-3">
+                <button type="submit" class="btn btn-warning">Salvar Monitoramento</button>
+                <a th:href="@{/monitor/list}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+    <th:block layout:fragment="js">
+        <script th:src="@{/js/edit_monitor.js}"></script>
+    </th:block>
+</section>
+</body>
+</html>
