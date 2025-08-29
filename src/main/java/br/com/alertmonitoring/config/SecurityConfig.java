@@ -1,42 +1,44 @@
-package br.com.alertmonitoring.config;
+package br.com.alertmonitoring.model;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+// CORREÇÃO: As importações agora usam 'jakarta.persistence'
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 
-@Configuration
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+import java.time.LocalDateTime;
 
-    @Value("${app.credentials.username}")
-    private String username;
+@Entity
+public class Monitor {
 
-    @Value("${app.credentials.password}")
-    private String password;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http
-            .authorizeRequests()
-                .antMatchers("/css/**", "/js/**", "/").permitAll()
-                .antMatchers("/monitor/**").authenticated()
-                .anyRequest().authenticated()
-                .and()
-            .formLogin()
-                .loginPage("/login").permitAll()
-                .defaultSuccessUrl("/monitor/list", true)
-                .and()
-            .logout()
-                .logoutSuccessUrl("/login?logout")
-                .permitAll();
-    }
+    @Column(nullable = false)
+    private String type; // "url" ou "telnet"
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-            .withUser(username)
-            .password(password)
-            .roles("USER");
-    }
+    @Column(nullable = false)
+    private String address;
+
+    private Integer port;
+
+    private LocalDateTime lastChecked;
+
+    private String status; // "OK" ou "NOK"
+
+    // Getters e Setters (continuam os mesmos)
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public Integer getPort() { return port; }
+    public void setPort(Integer port) { this.port = port; }
+    public LocalDateTime getLastChecked() { return lastChecked; }
+    public void setLastChecked(LocalDateTime lastChecked) { this.lastChecked = lastChecked; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }
