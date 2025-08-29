@@ -1,4 +1,4 @@
-// Pipeline completa para a aplicação AlertMonitoring - VERSÃO COM SONAR MAVEN PLUGIN
+// Pipeline completa para a aplicação AlertMonitoring - VERSÃO CORRIGIDA
 pipeline {
     agent any
 
@@ -13,49 +13,46 @@ pipeline {
         NEXUS_DOCKER_REGISTRY = '192.168.0.124:5000'
         NEXUS_CREDENTIALS_ID  = 'NEXUS_CREDS'
         KUBE_CONFIG_ID        = 'KUBE_CONFIG'
-        GITHUB_CREDENTIALS_ID = 'GITHUB_CREDS'
+        GITHUB_CREDENTIALS_ID = 'GITHUB_SSH'
     }
 
     stages {
         stage('1. Checkout from Git') {
             steps {
-                echo 'Buscando código do GitHub na branch main...'
+                echo 'Buscando código do GitHub...'
                 git branch: 'main', credentialsId: GITHUB_CREDENTIALS_ID, url: 'git@github.com:ProjetoDevSecOps/AlertMonitoring.git'
             }
         }
 
-        // ETAPA CORRIGIDA: Juntamos Build e Análise em um único comando Maven
-        stage('2. Build, Analyze & Push to Nexus') {
+        stage('2. Code Analysis with SonarQube') {
             steps {
-                // Usamos a credencial do SonarQube (token) e do Nexus aqui
-                withCredentials([
-                    string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_AUTH_TOKEN'),
-                    usernamePassword(credentialsId: NEXUS_CREDENTIALS_ID, passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')
-                ]) {
-                    // O novo comando 'mvn' faz tudo: compila, testa, analisa e envia para o Nexus
-                    sh """
-                        mvn clean verify sonar:sonar \
-                          -Dsonar.host.url=${SONAR_HOST_URL} \
-                          -Dsonar.login=${SONAR_AUTH_TOKEN} \
-                          deploy -DskipTests
-                    """
+                script {
+                    echo 'Analisando o código com o SonarQube...'
+                    def scannerHome = tool 'SonarScanner'
+                    withSonarQubeEnv(SONARQUBE_SERVER) {
+                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=${APP_NAME} -Dsonar.sources=."
+                    }
                 }
             }
         }
 
-        // ETAPA ADICIONADA: Agora esperamos pelo resultado da análise, que foi disparada no passo anterior
         stage('3. Wait for SonarQube Quality Gate') {
             steps {
-                echo 'Aguardando resultado da análise do SonarQube...'
                 timeout(time: 1, unit: 'HOURS') {
-                    // O SONARQUBE_SERVER é o nome que demos no "Configure System" do Jenkins
-                    waitForQualityGate abortPipeline: true, sonarqubeInstallationName: SONARQUBE_SERVER
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
 
-        // Os estágios restantes foram renumerados
-        stage('4. Build & Scan Docker Image') {
+        stage('4. Build & Push JAR to Nexus') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: NEXUS_CREDENTIALS_ID, passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
+                    sh "mvn clean deploy -DskipTests"
+                }
+            }
+        }
+
+        stage('5. Build & Scan Docker Image') {
             steps {
                 script {
                     def appNameLower = APP_NAME.toLowerCase()
@@ -70,7 +67,7 @@ pipeline {
             }
         }
 
-        stage('5. Push Docker Image to Nexus') {
+        stage('6. Push Docker Image to Nexus') {
             steps {
                 script {
                     echo 'Enviando imagem Docker para o registro do Nexus...'
@@ -85,8 +82,9 @@ pipeline {
             }
         }
 
-        stage('6. Deploy to Kubernetes') {
+        stage('7. Deploy to Kubernetes') {
             steps {
+                // VERSÃO CORRIGIDA COM O BLOCO 'script'
                 script {
                     withKubeConfig([credentialsId: KUBE_CONFIG_ID]) {
                         def appNameLower = APP_NAME.toLowerCase()
