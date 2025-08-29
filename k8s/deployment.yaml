@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmonitoring
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: alertmonitoring
+  template:
+    metadata:
+      labels:
+        app: alertmonitoring
+    spec:
+      containers:
+      - name: alertmonitoring
+        image: 192.168.0.124:5000/alertmonitoring:latest
+        ports:
+        - containerPort: 8080
