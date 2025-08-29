@@ -13,7 +13,7 @@ pipeline {
         NEXUS_DOCKER_REGISTRY = '192.168.0.124:5000'
         NEXUS_CREDENTIALS_ID  = 'NEXUS_CREDS'
         KUBE_CONFIG_ID        = 'KUBE_CONFIG'
-        GITHUB_CREDENTIALS_ID = 'GITHUB_CREDS'
+        GITHUB_CREDENTIALS_ID = 'GITHUB_SSH'
     }
 
     stages {
