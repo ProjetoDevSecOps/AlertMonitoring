@@ -1,44 +1,54 @@
-package br.com.alertmonitoring.model;
+package br.com.alertmonitoring.config;
 
-// CORREÇÃO: As importações agora usam 'jakarta.persistence'
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.SecurityFilterChain;
 
-import java.time.LocalDateTime;
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
 
-@Entity
-public class Monitor {
+    @Value("${app.credentials.username}")
+    private String username;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Value("${app.credentials.password}")
+    private String password;
 
-    @Column(nullable = false)
-    private String type; // "url" ou "telnet"
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests((requests) -> requests
+                        .requestMatchers("/css/**", "/js/**", "/").permitAll()
+                        .requestMatchers("/monitor/**").authenticated()
+                        .anyRequest().authenticated()
+                )
+                .formLogin((form) -> form
+                        .loginPage("/login")
+                        .permitAll()
+                        .defaultSuccessUrl("/monitor/list", true)
+                )
+                .logout((logout) -> logout
+                        .logoutSuccessUrl("/login?logout")
+                        .permitAll());
 
-    @Column(nullable = false)
-    private String address;
+        return http.build();
+    }
 
-    private Integer port;
+    @Bean
+    public UserDetailsService userDetailsService() {
+        UserDetails user = User.builder()
+                .username(username)
+                .password(password)
+                .roles("USER")
+                .build();
 
-    private LocalDateTime lastChecked;
-
-    private String status; // "OK" ou "NOK"
-
-    // Getters e Setters (continuam os mesmos)
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
-    public Integer getPort() { return port; }
-    public void setPort(Integer port) { this.port = port; }
-    public LocalDateTime getLastChecked() { return lastChecked; }
-    public void setLastChecked(LocalDateTime lastChecked) { this.lastChecked = lastChecked; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+        return new InMemoryUserDetailsManager(user);
+    }
 }
