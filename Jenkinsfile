@@ -20,7 +20,7 @@ pipeline {
         stage('1. Checkout from Git') {
             steps {
                 echo 'Buscando código do GitHub...'
-                git credentialsId: GITHUB_CREDENTIALS_ID, url: 'git@github.com:ProjetoDevSecOps/AlertMonitoring.git'
+                git branch: 'main', credentialsId: GITHUB_CREDENTIALS_ID, url: 'git@github.com:ProjetoDevSecOps/AlertMonitoring.git'
             }
         }
 
