@@ -29,16 +29,18 @@ pipeline {
             steps {
                 withSonarQubeEnv(SONARQUBE_SERVER) {
                     withCredentials([
-                        // O token do Sonar é pego automaticamente pelo withSonarQubeEnv, mas o deixamos para o comando mvn
                         string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_AUTH_TOKEN'),
                         usernamePassword(credentialsId: NEXUS_CREDENTIALS_ID, passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')
                     ]) {
-                        // A URL do Sonar agora é injetada pela variável de ambiente do withSonarQubeEnv
-                        sh """
-                            mvn clean verify sonar:sonar \
-                              -Dsonar.login=${SONAR_AUTH_TOKEN} \
-                              deploy -DskipTests
-                        """
+                        // Plugin para usar nosso arquivo de configuração do Nexus
+                        configFileProvider([configFile(fileId: 'nexus-settings', variable: 'MAVEN_SETTINGS')]) {
+                            sh """
+                                mvn clean verify sonar:sonar \
+                                  -s ${MAVEN_SETTINGS} \
+                                  -Dsonar.login=${SONAR_AUTH_TOKEN} \
+                                  deploy
+                            """
+                        }
                     }
                 }
             }
