@@ -1,4 +1,4 @@
-// Pipeline completa para a aplicação AlertMonitoring - VERSÃO FINAL E CORRETA
+// Pipeline completa para a aplicação AlertMonitoring - VERSÃO FINAL COM LÓGICA CORRIGIDA
 pipeline {
     agent any
 
@@ -24,28 +24,33 @@ pipeline {
             }
         }
 
+        // ETAPA CORRIGIDA: "Envelopamos" o estágio com o ambiente do SonarQube
         stage('2. Build, Analyze & Push to Nexus') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_AUTH_TOKEN'),
-                    usernamePassword(credentialsId: NEXUS_CREDENTIALS_ID, passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')
-                ]) {
-                    // A variável ${env.SONAR_HOST_URL} é injetada automaticamente pelo plugin do SonarQube no Jenkins
-                    sh """
-                        mvn clean verify sonar:sonar \
-                          -Dsonar.host.url=${env.SONAR_HOST_URL} \
-                          -Dsonar.login=${SONAR_AUTH_TOKEN} \
-                          deploy -DskipTests
-                    """
+                withSonarQubeEnv(SONARQUBE_SERVER) {
+                    withCredentials([
+                        // O token do Sonar é pego automaticamente pelo withSonarQubeEnv, mas o deixamos para o comando mvn
+                        string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_AUTH_TOKEN'),
+                        usernamePassword(credentialsId: NEXUS_CREDENTIALS_ID, passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')
+                    ]) {
+                        // A URL do Sonar agora é injetada pela variável de ambiente do withSonarQubeEnv
+                        sh """
+                            mvn clean verify sonar:sonar \
+                              -Dsonar.login=${SONAR_AUTH_TOKEN} \
+                              deploy -DskipTests
+                        """
+                    }
                 }
             }
         }
 
+        // ETAPA CORRIGIDA: O comando agora é muito mais simples
         stage('3. Wait for SonarQube Quality Gate') {
             steps {
                 echo 'Aguardando resultado da análise do SonarQube...'
                 timeout(time: 1, unit: 'HOURS') {
-                    waitForQualityGate abortPipeline: true, installationName: SONARQUBE_SERVER
+                    // Sem parâmetros extras, ele usa o contexto do 'withSonarQubeEnv' anterior
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
@@ -88,7 +93,7 @@ pipeline {
                         def imageName = "${NEXUS_DOCKER_REGISTRY}/${appNameLower}:${env.BUILD_NUMBER}"
 
                         echo "Realizando deploy da imagem: ${imageName} no Kubernetes..."
-                        sh "kubectl apply -f ks/"
+                        sh "kubectl apply -f k8s/"
                         sh "kubectl set image deployment/${appNameLower} ${appNameLower}=${imageName}"
                         sh "kubectl rollout status deployment/${appNameLower}"
                     }
