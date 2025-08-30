@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class HomeController {
 
-    // LINHA NOVA: Adiciona a ferramenta de logging
+    // Adiciona a ferramenta de logging
     private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
 
     @Autowired
@@ -27,7 +27,7 @@ public class HomeController {
 
     @GetMapping("/login")
     public String login() {
-        // LINHA NOVA: A mensagem do nosso "detetive"
+        // A mensagem do "detetive"
         logger.info(">>> MÉTODO LOGIN FOI CHAMADO! Servindo a página login.html...");
         return "login";
     }

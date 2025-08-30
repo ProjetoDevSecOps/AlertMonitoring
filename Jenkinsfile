@@ -1,4 +1,3 @@
-// Pipeline completa para a aplicação AlertMonitoring - VERSÃO FINAL COM LÓGICA CORRIGIDA
 pipeline {
     agent any
 
@@ -24,7 +23,6 @@ pipeline {
             }
         }
 
-        // ETAPA CORRIGIDA: "Envelopamos" o estágio com o ambiente do SonarQube
         stage('2. Build, Analyze & Push to Nexus') {
             steps {
                 withSonarQubeEnv(SONARQUBE_SERVER) {
@@ -32,7 +30,7 @@ pipeline {
                         string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_AUTH_TOKEN'),
                         usernamePassword(credentialsId: NEXUS_CREDENTIALS_ID, passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')
                     ]) {
-                        // Plugin para usar nosso arquivo de configuração do Nexus
+                        // Plugin para usar arquivo de configuração do Nexus
                         configFileProvider([configFile(fileId: 'nexus-settings', variable: 'MAVEN_SETTINGS')]) {
                             sh """
                                 mvn clean verify sonar:sonar \
@@ -46,7 +44,6 @@ pipeline {
             }
         }
 
-        // ETAPA CORRIGIDA: O comando agora é muito mais simples
         stage('3. Wait for SonarQube Quality Gate') {
             steps {
                 echo 'Aguardando resultado da análise do SonarQube...'
