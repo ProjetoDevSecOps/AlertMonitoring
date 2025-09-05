@@ -18,8 +18,8 @@ pipeline {
     stages {
         stage('1. Checkout from Git') {
             steps {
-                echo 'Buscando código do GitHub na branch main...'
-                git branch: 'main', credentialsId: GITHUB_CREDENTIALS_ID, url: 'git@github.com:ProjetoDevSecOps/AlertMonitoring.git'
+                echo "Buscando código do GitHub na branch ${env.BRANCH_NAME}..."
+                git branch: "${env.BRANCH_NAME}", credentialsId: GITHUB_CREDENTIALS_ID, url: 'git@github.com:ProjetoDevSecOps/AlertMonitoring.git'
             }
         }
 
