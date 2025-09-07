@@ -12,10 +12,12 @@ pipeline {
         NEXUS_DOCKER_REGISTRY = '192.168.0.124:5000'
         NEXUS_CREDENTIALS_ID  = 'NEXUS_CREDS'
         KUBE_CONFIG_ID        = 'KUBE_CONFIG'
-        GITHUB_CREDENTIALS_ID = 'GITHUB_CREDS' // Garanta que o ID da sua credencial SSH no Jenkins é este
+        GITHUB_CREDENTIALS_ID = 'GITHUB_CREDS' 
     }
 
     stages {
+        // ... Estágios 1 a 7 permanecem exatamente os mesmos ...
+
         stage('1. Checkout from Git') {
             steps {
                 echo 'Buscando código do GitHub na branch main...'
@@ -26,8 +28,6 @@ pipeline {
         stage('2. Dependency Vulnerability Check') {
             steps {
                 echo 'Verificando vulnerabilidades nas dependências com OWASP Dependency-Check...'
-                // Este comando ativa o plugin configurado no pom.xml
-                // A pipeline falhará se encontrar vulnerabilidades com score CVSS 7 ou maior
                 sh 'mvn verify -DskipTests'
             }
         }
@@ -66,10 +66,8 @@ pipeline {
                 script {
                     def appNameLower = APP_NAME.toLowerCase()
                     def imageName = "${NEXUS_DOCKER_REGISTRY}/${appNameLower}:${env.BUILD_NUMBER}"
-
                     echo "Construindo imagem Docker: ${imageName}"
                     docker.build(imageName)
-
                     echo "Escaneando a imagem em busca de vulnerabilidades com Trivy..."
                     sh "trivy image --exit-code 1 --severity CRITICAL,HIGH ${imageName}"
                 }
@@ -83,7 +81,6 @@ pipeline {
                     docker.withRegistry("http://${NEXUS_DOCKER_REGISTRY}", NEXUS_CREDENTIALS_ID) {
                         def appNameLower = APP_NAME.toLowerCase()
                         def imageNameWithTag = "${NEXUS_DOCKER_REGISTRY}/${appNameLower}:${env.BUILD_NUMBER}"
-
                         docker.image(imageNameWithTag).push()
                         docker.image(imageNameWithTag).push('latest')
                     }
@@ -97,7 +94,6 @@ pipeline {
                     withKubeConfig([credentialsId: KUBE_CONFIG_ID]) {
                         def appNameLower = APP_NAME.toLowerCase()
                         def imageName = "${NEXUS_DOCKER_REGISTRY}/${appNameLower}:${env.BUILD_NUMBER}"
-
                         echo "Realizando deploy da imagem: ${imageName} no Kubernetes..."
                         sh "kubectl apply -f k8s/"
                         sh "kubectl set image deployment/${appNameLower} ${appNameLower}=${imageName}"
@@ -107,25 +103,33 @@ pipeline {
             }
         }
 
+        // =================================================================== //
+        //   ESTÁGIO 8 ATUALIZADO COM SCAN DA IMAGEM DO ZAP                    //
+        // =================================================================== //
         stage('8. Dynamic Security Scan with ZAP') {
             steps {
                 script {
+                    def zapImage = "zaproxy/zap-stable" // Usando a imagem oficial e estável
+                    
+                    echo "Baixando a imagem do OWASP ZAP: ${zapImage}"
+                    sh "docker pull ${zapImage}"
+                    
+                    echo "Escaneando a imagem do OWASP ZAP com Trivy..."
+                    // Se a própria imagem do ZAP tiver vulnerabilidades, a pipeline falha
+                    sh "trivy image --exit-code 1 --severity CRITICAL,HIGH ${zapImage}"
+
                     echo 'Iniciando scan de segurança dinâmico na aplicação em execução...'
-                    // Damos um tempo para a aplicação subir completamente no Kubernetes
                     sleep(time: 30, unit: 'SECONDS') 
                     
-                    // A URL é o IP do nó do Kubernetes na porta 30080
                     def targetUrl = "http://192.168.0.142:30080/"
-                    
                     echo "Alvo do ZAP: ${targetUrl}"
 
                     sh """
-                        docker run --rm -v \$(pwd):/zap/wrk/:rw owasp/zap2docker-stable zap-baseline.py \
+                        docker run --rm -v \$(pwd):/zap/wrk/:rw ${zapImage} zap-baseline.py \
                         -t ${targetUrl} \
                         -g gen.conf -r report.html
                     """
                     
-                    // Salva o relatório do ZAP nos artefatos do build
                     archiveArtifacts artifacts: 'report.html', allowEmptyArchive: true
                 }
             }
