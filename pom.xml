@@ -12,8 +12,7 @@
 
     <groupId>br.com.alertmonitoring</groupId>
     <artifactId>alert-monitoring</artifactId>
-    <version>1.0.0</version>
-    <name>AlertMonitoring</name>
+    <version>1.0.0-SNAPSHOT</version> <name>AlertMonitoring</name>
     <description>Ferramenta de monitoramento de URLs</description>
 
     <properties>
@@ -111,6 +110,20 @@
                         <phase>test</phase>
                         <goals>
                             <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>9.2.0</version> <configuration>
+                    <failBuildOnCVSS>7</failBuildOnCVSS> </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>
