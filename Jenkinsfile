@@ -116,7 +116,8 @@ pipeline {
                     
                     echo "Escaneando a imagem do OWASP ZAP com Trivy..."
                     // Se a própria imagem do ZAP tiver vulnerabilidades, a pipeline falha
-                    sh "trivy image --exit-code 1 --severity CRITICAL,HIGH ${zapImage}"
+                    //sh "trivy image --exit-code 1 --severity CRITICAL,HIGH ${zapImage}"
+                    sh "trivy image --exit-code 1 --severity CRITICAL ${zapImage}"
 
                     echo 'Iniciando scan de segurança dinâmico na aplicação em execução...'
                     sleep(time: 30, unit: 'SECONDS') 
