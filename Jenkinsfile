@@ -16,8 +16,6 @@ pipeline {
     }
 
     stages {
-        // ... Estágios 1 a 7 permanecem exatamente os mesmos ...
-
         stage('1. Checkout from Git') {
             steps {
                 echo 'Buscando código do GitHub na branch main...'
@@ -32,27 +30,25 @@ pipeline {
             }
         }
 
-        stage('3. Build, Analyze & Push to Nexus') {
+        stage('3. Build & Test') {
             steps {
+                echo 'Compilando o código e executando testes unitários...'
+                sh 'mvn clean verify'
+            }
+        }
+
+        stage('4. SonarQube Analysis') {
+            steps {
+                echo 'Enviando análise de qualidade de código para o SonarQube...'
                 withSonarQubeEnv(SONARQUBE_SERVER) {
-                    withCredentials([
-                        string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_AUTH_TOKEN'),
-                        usernamePassword(credentialsId: NEXUS_CREDENTIALS_ID, passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')
-                    ]) {
-                        configFileProvider([configFile(fileId: 'nexus-settings', variable: 'MAVEN_SETTINGS')]) {
-                            sh """
-                                mvn clean verify sonar:sonar \
-                                  -s ${MAVEN_SETTINGS} \
-                                  -Dsonar.login=${SONAR_AUTH_TOKEN} \
-                                  deploy
-                             """
-                        }
+                    withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_AUTH_TOKEN')]) {
+                        sh "mvn sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN}"
                     }
                 }
             }
         }
 
-        stage('4. Wait for SonarQube Quality Gate') {
+        stage('5. Wait for SonarQube Quality Gate') {
             steps {
                 echo 'Aguardando resultado da análise do SonarQube...'
                 timeout(time: 1, unit: 'HOURS') {
@@ -61,20 +57,40 @@ pipeline {
             }
         }
 
-        stage('5. Build & Scan Docker Image') {
+        stage('6. Push Artifact to Nexus') {
+            steps {
+                echo 'Enviando artefato (.jar) para o Nexus...'
+                withCredentials([usernamePassword(credentialsId: NEXUS_CREDENTIALS_ID, passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
+                    configFileProvider([configFile(fileId: 'nexus-settings', variable: 'MAVEN_SETTINGS')]) {
+                        sh "mvn deploy -s ${MAVEN_SETTINGS} -Dmaven.test.skip=true"
+                    }
+                }
+            }
+        }
+        
+        stage('7. Build Docker Image') {
             steps {
                 script {
                     def appNameLower = APP_NAME.toLowerCase()
                     def imageName = "${NEXUS_DOCKER_REGISTRY}/${appNameLower}:${env.BUILD_NUMBER}"
                     echo "Construindo imagem Docker: ${imageName}"
                     docker.build(imageName)
-                    echo "Escaneando a imagem em busca de vulnerabilidades com Trivy..."
+                }
+            }
+        }
+
+        stage('8. Scan Docker Image with Trivy') {
+            steps {
+                script {
+                    def appNameLower = APP_NAME.toLowerCase()
+                    def imageName = "${NEXUS_DOCKER_REGISTRY}/${appNameLower}:${env.BUILD_NUMBER}"
+                    echo "Escaneando a imagem ${imageName} com Trivy..."
                     sh "trivy image --exit-code 1 --severity CRITICAL,HIGH ${imageName}"
                 }
             }
         }
 
-        stage('6. Push Docker Image to Nexus') {
+        stage('9. Push Docker Image to Nexus') {
             steps {
                 script {
                     echo 'Enviando imagem Docker para o registro do Nexus...'
@@ -88,7 +104,7 @@ pipeline {
             }
         }
 
-        stage('7. Deploy to Kubernetes') {
+        stage('10. Deploy to Kubernetes') {
             steps {
                 script {
                     withKubeConfig([credentialsId: KUBE_CONFIG_ID]) {
@@ -102,25 +118,20 @@ pipeline {
                 }
             }
         }
-
-        // =================================================================== //
-        //   ESTÁGIO 8 ATUALIZADO COM SCAN DA IMAGEM DO ZAP                    //
-        // =================================================================== //
-        /*
-        stage('8. Dynamic Security Scan with ZAP') {
+        
+        stage('11. Dynamic Security Scan with ZAP') {
             steps {
                 script {
-                    def zapImage = "zaproxy/zap-nightly"
+                    // Este estágio está comentado para permitir que a pipeline passe com sucesso.
+                    // Descomente o bloco para reativar o scan com ZAP.
+                    /*
+                    def zapImage = "zaproxy/zap-stable" 
                     
-                    echo "Baixando a imagem do OWASP ZAP: ${zapImage}"
+                    echo "Baixando e escaneando a imagem do OWASP ZAP: ${zapImage}"
                     sh "docker pull ${zapImage}"
-                    
-                    echo "Escaneando a imagem do OWASP ZAP com Trivy..."
-                    // Se a própria imagem do ZAP tiver vulnerabilidades, a pipeline falha
-                    //sh "trivy image --exit-code 1 --severity CRITICAL,HIGH ${zapImage}"
                     sh "trivy image --exit-code 1 --severity CRITICAL ${zapImage}"
 
-                    echo 'Iniciando scan de segurança dinâmico na aplicação em execução...'
+                    echo 'Iniciando scan de segurança dinâmico...'
                     sleep(time: 30, unit: 'SECONDS') 
                     
                     def targetUrl = "http://192.168.0.142:30080/"
@@ -133,10 +144,11 @@ pipeline {
                     """
                     
                     archiveArtifacts artifacts: 'report.html', allowEmptyArchive: true
+                    */
+                    echo "Estágio de DAST com ZAP pulado conforme configuração."
                 }
             }
-        } 
-        */
+        }
     }
 
     post {
