@@ -109,7 +109,7 @@ pipeline {
         stage('8. Dynamic Security Scan with ZAP') {
             steps {
                 script {
-                    def zapImage = "zaproxy/zap-stable"
+                    def zapImage = "zaproxy/zap-nightly"
                     
                     echo "Baixando a imagem do OWASP ZAP: ${zapImage}"
                     sh "docker pull ${zapImage}"
