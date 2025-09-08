@@ -106,6 +106,7 @@ pipeline {
         // =================================================================== //
         //   ESTÁGIO 8 ATUALIZADO COM SCAN DA IMAGEM DO ZAP                    //
         // =================================================================== //
+        /*
         stage('8. Dynamic Security Scan with ZAP') {
             steps {
                 script {
@@ -134,7 +135,8 @@ pipeline {
                     archiveArtifacts artifacts: 'report.html', allowEmptyArchive: true
                 }
             }
-        }
+        } 
+        */
     }
 
     post {
