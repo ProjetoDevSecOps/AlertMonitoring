@@ -118,13 +118,13 @@ pipeline {
                 }
             }
         }
-        
+        /*
         stage('11. Dynamic Security Scan with ZAP') {
             steps {
                 script {
                     // Este estágio está comentado para permitir que a pipeline passe com sucesso.
                     // Descomente o bloco para reativar o scan com ZAP.
-                    /*
+                    
                     def zapImage = "zaproxy/zap-stable" 
                     
                     echo "Baixando e escaneando a imagem do OWASP ZAP: ${zapImage}"
@@ -144,11 +144,12 @@ pipeline {
                     """
                     
                     archiveArtifacts artifacts: 'report.html', allowEmptyArchive: true
-                    */
+                    
                     echo "Estágio de DAST com ZAP pulado conforme configuração."
                 }
             }
         }
+        */
     }
 
     post {
