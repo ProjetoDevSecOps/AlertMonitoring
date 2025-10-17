@@ -17,17 +17,7 @@
 
     <properties>
         <java.version>21</java.version>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-core</artifactId>
-                <version>10.1.44</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+    </properties>    
 
     <dependencies>
         <dependency>
