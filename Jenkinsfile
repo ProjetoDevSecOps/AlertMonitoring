@@ -25,8 +25,13 @@ pipeline {
 
         stage('2. Dependency Vulnerability Check') {
             steps {
-                echo 'Verificando vulnerabilidades nas dependências com OWASP Dependency-Check...'
-                sh 'mvn verify -DskipTests'
+                // Bloco 'withEnv' para carregar a credencial em uma variável de ambiente
+                withEnv(["NVD_API_KEY=${credentials('NVD_API_KEY_ID')}"]) {
+                    echo 'Verificando vulnerabilidades nas dependências com OWASP Dependency-Check...'
+                    
+                    // Adicione o argumento -DnvdApiKey="..." ao seu comando original
+                    sh 'mvn verify -DskipTests -DnvdApiKey="${NVD_API_KEY}"'
+                }
             }
         }
 
