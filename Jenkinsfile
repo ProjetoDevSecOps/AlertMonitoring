@@ -19,6 +19,7 @@ pipeline {
         stage('1. Checkout from Git') {
             steps {
                 echo 'Buscando código do GitHub na branch main...'
+                cleanBeforeCheckout()
                 git branch: "${env.BRANCH}", credentialsId: GITHUB_CREDENTIALS_ID, url: 'git@github.com:ProjetoDevSecOps/AlertMonitoring.git'
             }
         }
