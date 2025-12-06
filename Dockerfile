@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-alpine
+FROM FROM alpine:latest
 # Garante a correção do libpng
 RUN apk update && apk upgrade --no-cache && apk add --no-cache libpng 
 WORKDIR /app
