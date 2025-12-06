@@ -79,7 +79,7 @@ pipeline {
                     def appNameLower = APP_NAME.toLowerCase()
                     def imageName = "${NEXUS_DOCKER_REGISTRY}/${appNameLower}:${env.BUILD_NUMBER}"
                     echo "Construindo imagem Docker: ${imageName}"
-                    docker.build(imageName)
+                    docker.build(imageName, "--no-cache .")
                 }
             }
         }
