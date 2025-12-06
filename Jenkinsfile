@@ -73,6 +73,19 @@ pipeline {
             }
         }
 
+        stage('DEBUG — Mostrar arquivos reais do Jenkins Workspace') {
+            steps {
+                sh '''
+                    echo '=== PATH ATUAL DO JENKINS ==='
+                    pwd
+                    echo '=== LISTA DE ARQUIVOS ==='
+                    ls -lah
+                    echo '=== LISTA RECURSIVA ==='
+                    ls -R .
+                '''
+            }
+        }
+        
         stage('7. Build Docker Image') {
             steps {
                 script {
