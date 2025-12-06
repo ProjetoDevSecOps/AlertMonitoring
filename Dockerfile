@@ -5,7 +5,7 @@ FROM eclipse-temurin:21-jdk-alpine
 # Atualiza os pacotes do sistema (incluindo libpng) para a versão mais recente
 # corrigindo as vulnerabilidades CRITICAL/HIGH do OS.
 # -----------------------------------------------------------
-RUN apk update && apk upgrade --no-cache
+RUN apk update && apk upgrade --no-cache libpng
 
 WORKDIR /app
 COPY target/*.jar app.jar
