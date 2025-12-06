@@ -86,7 +86,7 @@ pipeline {
             }
         }*/
 
-        stage('DEBUG — Testar download da imagem Alpine Edge') {
+        /*stage('DEBUG — Testar download da imagem Alpine Edge') {
             steps {
                 sh '''
                     echo "=== Tentando baixar alpine:edge ==="
@@ -94,6 +94,16 @@ pipeline {
 
                     echo "=== Imagens localmente disponíveis ==="
                     docker images | grep alpine || true
+                '''
+            }
+        }*/
+
+        stage('DEBUG — Exibir Dockerfile REAL usado no build') {
+            steps {
+                sh '''
+                echo "=== DOCKERFILE REAL ==="
+                cat Dockerfile
+                echo "======================="
                 '''
             }
         }
