@@ -71,42 +71,7 @@ pipeline {
                     }
                 }
             }
-        }
-
-        /*stage('DEBUG — Mostrar arquivos reais do Jenkins Workspace') {
-            steps {
-                sh '''
-                    echo '=== PATH ATUAL DO JENKINS ==='
-                    pwd
-                    echo '=== LISTA DE ARQUIVOS ==='
-                    ls -lah
-                    echo '=== LISTA RECURSIVA ==='
-                    ls -R .
-                '''
-            }
-        }*/
-
-        /*stage('DEBUG — Testar download da imagem Alpine Edge') {
-            steps {
-                sh '''
-                    echo "=== Tentando baixar alpine:edge ==="
-                    docker pull alpine:edge || true
-
-                    echo "=== Imagens localmente disponíveis ==="
-                    docker images | grep alpine || true
-                '''
-            }
-        }*/
-
-        stage('DEBUG — Exibir Dockerfile REAL usado no build') {
-            steps {
-                sh '''
-                echo "=== DOCKERFILE REAL ==="
-                cat Dockerfile
-                echo "======================="
-                '''
-            }
-        }
+        }       
         
         stage('7. Build Docker Image') {
             steps {
