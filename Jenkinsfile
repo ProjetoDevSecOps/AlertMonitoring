@@ -75,10 +75,7 @@ pipeline {
         
         stage('7. Build Docker Image') {
             steps {
-                script {
-                    sh '''
-                        sed -i 's|FROM alpine:.*|FROM alpine:edge|' Dockerfile
-                    '''
+                script {                    
                     def appNameLower = APP_NAME.toLowerCase()
                     def imageName = "${NEXUS_DOCKER_REGISTRY}/${appNameLower}:${env.BUILD_NUMBER}"
                     echo "Construindo imagem Docker: ${imageName}"
