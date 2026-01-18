@@ -14,6 +14,31 @@ The application, **AlertMonitoring**, is a URL monitoring tool built with Spring
 
 However, the core focus of this repository is the **infrastructure and security automation** built around the application. The goal was to simulate an On-Premise environment, configuring the entire CI/CD pipeline, Container Orchestration, and Security Gates manually. This approach allowed for a deep understanding of the "Control Plane" and "Data Plane" operations, avoiding the abstractions often found in managed cloud services.
 
+## 📥 Inputs & 📤 Outputs
+
+This breakdown reflects the integration between infrastructure automation and the application's business logic.
+
+### 🛠️ DevSecOps Pipeline (Automation)
+* **Inputs:**
+    * **Source Code:** Java 21 / Spring Boot and K8s Manifests.
+    * **Credentials:** Secrets managed by Jenkins (`NEXUS_CREDS`, `SONAR_TOKEN`, `NVD_API_KEY`).
+    * **Security Feeds:** NVD vulnerability databases (via OWASP) and Trivy image vulnerability databases.
+* **Outputs:**
+    * **Secure Artifacts:** `.jar` file and Docker Image (Alpine-based) stored in Nexus Repository Manager.
+    * **Compliance Reports:** Code coverage reports (JaCoCo) and quality analysis in SonarQube.
+    * **Deployment:** Application running on Kubernetes Cluster using a Rolling Update strategy.
+
+### 💻 AlertMonitoring (Application)
+* **Inputs:**
+    * **Configurations (`application.yml`):** Timeout parameters (URL/Telnet), check intervals (default 300s), and administrative credentials.
+    * **Monitoring:** URL registration (HTTP) and Hosts/Ports (TCP/Telnet).
+    * **Authentication:** User login managed via Spring Security 6 (In-Memory).
+* **Outputs:**
+    * **Operational Logs:** Logs with automatic rotation (1MB limit and 3 backups).
+    * **Notifications:** Critical alerts via SMTP (email) triggered by `EmailService`.
+    * **Persistence:** Monitoring data stored in H2 database (Runtime).
+    * **Dashboard:** Visual interface listing the count of "OK" and "NOK" services.
+
 ## 🏗️ Architecture & DevSecOps Pipeline
 
 The pipeline was designed to integrate security at the development level (**Shift-Left** strategy).
